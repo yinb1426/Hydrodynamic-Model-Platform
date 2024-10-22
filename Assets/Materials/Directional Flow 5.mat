@@ -168,7 +168,7 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
-    - _TimeStep: 0.11
+    - _TimeStep: 0
     - _WavePeriod_A: 1.578
     - _WavePeriod_B: 1.36
     - _WavePeriod_C: 1.66
