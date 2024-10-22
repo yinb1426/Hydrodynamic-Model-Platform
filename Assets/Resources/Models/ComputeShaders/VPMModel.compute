@@ -1,0 +1,190 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel BoundaryCondition
+#pragma kernel WaterIncrementByRainfall
+#pragma kernel UpdateOutputFlow
+#pragma kernel UpdateNewOutputFlow
+#pragma kernel UpdateVelocityAndWaterHeight
+//#pragma kernel Evaporation
+#pragma kernel UpdateWaterHeightWithTerrain
+#pragma kernel ConvertVelocityToTexture
+#pragma kernel ConvertHeightToTexture
+
+RWStructuredBuffer<float> waterHeight;
+RWStructuredBuffer<float> terrainHeight;
+RWStructuredBuffer<float> rainfallRate;
+RWStructuredBuffer<float4> outputFlow;
+RWStructuredBuffer<float4> newOutputFlow;
+RWStructuredBuffer<float2> waterVelocity;
+
+RWStructuredBuffer<float3> positions;
+RWTexture2D<float2> waterVelocityTexture;
+RWTexture2D<float> waterHeightTexture;
+
+int sizeX, sizeY;
+float deltaT;
+float rateFactor;
+float gravity;
+float pipeLength;
+float Ke;
+
+[numthreads(32, 16, 1)]
+void BoundaryCondition(uint3 id : SV_DispatchThreadID)
+{
+    if (!(id.x < sizeX && id.y < sizeY))
+        return;
+    int idx = id.y * sizeX + id.x;
+    if (id.x == 0)
+        waterHeight[idx] = 0;
+    if (id.y == 0)
+        waterHeight[idx] = 0;
+    if (id.x == sizeX - 1)
+        waterHeight[idx] = 0;
+    if (id.y == sizeY - 1)
+        waterHeight[idx] = 0;
+}
+
+[numthreads(32, 16, 1)]
+void WaterIncrementByRainfall(uint3 id : SV_DispatchThreadID)
+{
+    if (!(id.x < sizeX && id.y < sizeY))
+        return;
+    int idx = id.y * sizeX + id.x;
+    waterHeight[idx] = waterHeight[idx] + deltaT * rainfallRate[idx] / rateFactor;
+}
+
+[numthreads(32, 16, 1)]
+void UpdateOutputFlow(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= sizeX || id.y >= sizeY)
+        return;
+    if (!(id.x >= 1 && id.x < sizeX - 1 && id.y >= 1 && id.y < sizeY - 1))
+        return;
+    int idx = id.y * sizeX + id.x;
+
+    float deltaHeightLeft = terrainHeight[idx] + waterHeight[idx] - terrainHeight[id.y * sizeX + (id.x - 1)] - waterHeight[id.y * sizeX + (id.x - 1)];
+    float deltaHeightRight = terrainHeight[idx] + waterHeight[idx] - terrainHeight[id.y * sizeX + (id.x + 1)] - waterHeight[id.y * sizeX + (id.x + 1)];
+    float deltaHeightTop = terrainHeight[idx] + waterHeight[idx] - terrainHeight[(id.y - 1) * sizeX + id.x] - waterHeight[(id.y - 1) * sizeX + id.x];
+    float deltaHeightBottom = terrainHeight[idx] + waterHeight[idx] - terrainHeight[(id.y + 1) * sizeX + id.x] - waterHeight[(id.y + 1) * sizeX + id.x];
+
+    float oldOutputFlowLeft = outputFlow[idx].x;
+    float oldOutputFlowRight = outputFlow[idx].y;
+    float oldOutputFlowTop = outputFlow[idx].z;
+    float oldOutputFlowBottom = outputFlow[idx].w;
+
+    float damping = 0.9999;
+
+    float newOutputFlowLeft = max(0.0, damping * oldOutputFlowLeft + deltaT * pipeLength * pipeLength * gravity * deltaHeightLeft / pipeLength);
+    float newOutputFlowRight = max(0.0, damping * oldOutputFlowRight + deltaT * pipeLength * pipeLength * gravity * deltaHeightRight / pipeLength);
+    float newOutputFlowTop = max(0.0, damping * oldOutputFlowTop + deltaT * pipeLength * pipeLength * gravity * deltaHeightTop / pipeLength);
+    float newOutputFlowBottom = max(0.0, damping * oldOutputFlowBottom + deltaT * pipeLength * pipeLength * gravity * deltaHeightBottom / pipeLength);
+
+    float outputVolume = (newOutputFlowLeft + newOutputFlowRight + newOutputFlowTop + newOutputFlowBottom) * deltaT;
+
+    float K = min(1.0, waterHeight[idx] * pipeLength * pipeLength / outputVolume);
+
+    newOutputFlowLeft *= K;
+    newOutputFlowRight *= K;
+    newOutputFlowTop *= K;
+    newOutputFlowBottom *= K;
+
+    newOutputFlow[idx].x = newOutputFlowLeft;
+    newOutputFlow[idx].y = newOutputFlowRight;
+    newOutputFlow[idx].z = newOutputFlowTop;
+    newOutputFlow[idx].w = newOutputFlowBottom;
+}
+
+[numthreads(32, 16, 1)]
+void UpdateNewOutputFlow(uint3 id : SV_DispatchThreadID)
+{
+    if (!(id.x < sizeX && id.y < sizeY))
+        return;
+    int idx = id.y * sizeX + id.x;
+    outputFlow[idx] = newOutputFlow[idx];
+}
+
+[numthreads(32, 16, 1)]
+void UpdateVelocityAndWaterHeight(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= sizeX || id.y >= sizeY)
+        return;
+    if (!(id.x >= 1 && id.x < sizeX - 1 && id.y >= 1 && id.y < sizeY - 1))
+        return;
+    int idx = id.y * sizeX + id.x;
+    float oldWaterHeight = waterHeight[idx];
+    float deltaV = (outputFlow[id.y * sizeX + (id.x - 1)].y + outputFlow[id.y * sizeX + (id.x + 1)].x + outputFlow[(id.y - 1) * sizeX + id.x].w + outputFlow[(id.y + 1) * sizeX + id.x].z - outputFlow[idx].x - outputFlow[idx].y - outputFlow[idx].z - outputFlow[idx].w) * deltaT;
+    float d2 = oldWaterHeight + deltaV / (pipeLength * pipeLength);
+    float avgWaterHeight = (d2 + oldWaterHeight) / 2.0;
+    float velocityFactor = avgWaterHeight * pipeLength;
+
+    float deltaWX = (outputFlow[id.y * sizeX + (id.x - 1)].y + outputFlow[idx].y - outputFlow[idx].x - outputFlow[id.y * sizeX + (id.x + 1)].x) / 2.0;
+    float deltaWY = (outputFlow[(id.y - 1) * sizeX + id.x].w + outputFlow[idx].w - outputFlow[idx].z - outputFlow[(id.y + 1) * sizeX + id.x].z) / 2.0;
+
+    float velocityU = 0.0;
+    float velocityV = 0.0;
+
+    if (velocityFactor > 5e-7)
+    {
+        velocityU = deltaWX / velocityFactor;
+        velocityV = deltaWY / velocityFactor;
+    }
+    if (d2 > 9999.0 || d2 < 1e-7)
+        d2 = 0.0;
+    waterHeight[idx] = d2;
+    waterVelocity[idx].x = velocityU;
+    waterVelocity[idx].y = velocityV;
+}
+
+//[numthreads(32, 16, 1)]
+//void Evaporation(uint3 id : SV_DispatchThreadID)
+//{
+//    if (!(id.x < sizeX && id.y < sizeY))
+//        return;
+//    int idx = id.y * sizeX + id.x;
+//    float oldWaterHeight = waterHeight[idx];
+//    float newWaterHeight = oldWaterHeight * (1 - Ke * deltaT);
+//    if (newWaterHeight < 0.00005)
+//        newWaterHeight = 0.0;
+//    waterHeight[idx] = newWaterHeight;
+//}
+
+[numthreads(32, 16, 1)]
+void UpdateWaterHeightWithTerrain(uint3 id : SV_DispatchThreadID)
+{
+    if (!(id.x < sizeX && id.y < sizeY))
+        return;
+    int idx = id.y * sizeX + id.x;
+    float currentWaterHeight = waterHeight[idx];
+    float currentTerrainHeight = terrainHeight[idx];
+    if (currentWaterHeight < 0.1)
+        currentWaterHeight = -1;
+    positions[idx].y = currentTerrainHeight + currentWaterHeight;
+
+}
+
+[numthreads(32, 16, 1)]
+void ConvertVelocityToTexture(uint3 id : SV_DispatchThreadID)
+{
+    if (!(id.x < sizeX && id.y < sizeY))
+        return;
+    float2 velocity = waterVelocity[id.y * sizeX + id.x];
+    float velocityLength = length(velocity);
+    
+    if (velocityLength > 5.0)
+        velocity = velocity / velocityLength * 5.0;
+    
+    velocity = velocity / 5.0 ;
+    waterVelocityTexture[id.xy] = float2(velocity * 0.5 + 0.5);
+}
+
+[numthreads(32, 16, 1)]
+void ConvertHeightToTexture(uint3 id : SV_DispatchThreadID)
+{
+    if (!(id.x < sizeX && id.y < sizeY))
+        return;
+    float height = waterHeight[id.y * sizeX + id.x];
+    
+    if (height < 0.005)
+        height = 0.0;
+    
+    waterHeightTexture[id.xy] = height;
+}
