@@ -20,6 +20,7 @@ public class ModelSelector : MonoBehaviour
     private Button btnSelectModel;
     private Button btnExportFiles;
     private Button btnCloseModel;
+    private Button btnQuit;
     private Button btnConfirm;
     private Button btnClose;
 
@@ -60,6 +61,7 @@ public class ModelSelector : MonoBehaviour
         btnSelectModel = navBarVE.Q<Button>(UIConstants.SELECT_MODEL_BUTTON_NAME);
         btnExportFiles = navBarVE.Q<Button>(UIConstants.EXPORT_FILES_BUTTON_NAME);
         btnCloseModel = navBarVE.Q<Button>(UIConstants.CLOSE_MODEL_BUTTON_NAME);
+        btnQuit = navBarVE.Q<Button>(UIConstants.QUIT_BUTTON_NAME);
 
         // 获取窗口中的案件和下拉框
         btnConfirm = modelSelectorVE.Q<Button>(UIConstants.CONFIRM_BUTTON_NAME);
@@ -110,6 +112,7 @@ public class ModelSelector : MonoBehaviour
         btnSelectModel.RegisterCallback<ClickEvent>(OnBtnSelectModelClick);
         btnExportFiles.RegisterCallback<ClickEvent>(OnBtnExportFilesClick);
         btnCloseModel.RegisterCallback<ClickEvent>(OnBtnCloseModelClick);
+        btnQuit.RegisterCallback<ClickEvent>(OnBtnQuitClick);
         btnConfirm.RegisterCallback<ClickEvent>(OnBtnConfirmClick);
         btnClose.RegisterCallback<ClickEvent>(OnBtnCloseClick);
     }
@@ -235,5 +238,11 @@ public class ModelSelector : MonoBehaviour
         Debug.Log("Finish Running!");
         modelController.FinishRunning();
         cameraSwitcher.ActivateInitialCamera();
+    }
+
+    private void OnBtnQuitClick(ClickEvent e)
+    {
+        Debug.Log("Quit Application!");
+        Application.Quit();
     }
 }

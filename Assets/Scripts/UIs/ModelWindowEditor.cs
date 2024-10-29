@@ -15,7 +15,7 @@ public static class ModelWindowEditor
     {
         FloatField paramField = new FloatField();
         paramField.name = modelName + "_" + paramName + MODEL_FLOATFIELD_SUFFIX;
-        var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/UIs/StyleSheet/FloatFieldStyleSheet.uss");
+        var styleSheet = Resources.Load<StyleSheet>("StyleSheet/FloatFieldStyleSheet");
         paramField.styleSheets.Add(styleSheet);
         paramField.label = paramName;
         paramField.value = defaultValue;
@@ -27,7 +27,7 @@ public static class ModelWindowEditor
         // 加载文件框体的基础VE
         VisualElement fileVE = new VisualElement();
         fileVE.name = modelName + "_" + fileName + MODEL_VISUALELEMENT_SUFFIX;
-        var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/UIs/StyleSheet/FileLoaderStyleSheet.uss");
+        var styleSheet = Resources.Load<StyleSheet>("StyleSheet/FileLoaderStyleSheet");
         fileVE.styleSheets.Clear();
         fileVE.styleSheets.Add(styleSheet);
 
@@ -37,7 +37,7 @@ public static class ModelWindowEditor
         textField.label = fileName;
         textField.value = string.Empty;
         textField.isReadOnly = true;
-        var textFieldStyleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/UIs/StyleSheet/TextFieldStyleSheet.uss");
+        var textFieldStyleSheet = Resources.Load<StyleSheet>("StyleSheet/TextFieldStyleSheet");
         textField.styleSheets.Add(textFieldStyleSheet);
         fileVE.Add(textField);
 
@@ -45,7 +45,7 @@ public static class ModelWindowEditor
         Button btnLoad = new Button();
         btnLoad.name = modelName + "_" + fileName + MODEL_BUTTON_SUFFIX;
         btnLoad.text = "Load";
-        var btnStyleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/UIs/StyleSheet/LoadFileButtonStyleSheet.uss");
+        var btnStyleSheet = Resources.Load<StyleSheet>("StyleSheet/LoadFileButtonStyleSheet");
         btnLoad.styleSheets.Add(btnStyleSheet);
         fileVE.Add(btnLoad);
 
@@ -56,7 +56,7 @@ public static class ModelWindowEditor
     {
         VisualElement modelVE = new VisualElement();
         modelVE.name = modelName + MODEL_VISUALELEMENT_SUFFIX;
-        var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/UIs/StyleSheet/VisualElementStyleSheet.uss");
+        var styleSheet = Resources.Load<StyleSheet>("StyleSheet/VisualElementStyleSheet");
         modelVE.styleSheets.Add(styleSheet);
         return modelVE;
     }

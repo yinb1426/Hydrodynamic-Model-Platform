@@ -9,16 +9,24 @@ public class CameraSwitcher : MonoBehaviour
     private int camIndex = 0;
     private int camCount = 0;
     private CinemachineVirtualCamera initialCamera;
-    private List<CinemachineVirtualCamera> cameraList = new List<CinemachineVirtualCamera>();
+    private Vector3 initialCameraPosition;
+    private Quaternion initialCameraRotation;
+    private List<CinemachineVirtualCamera> cameraList = new();
+    private List<Vector3> cameraPositionList = new();
+    private List<Quaternion> cameraRotationList = new();
 
     // Start is called before the first frame update
     void Start()
     {
-        camCount = this.transform.childCount - 1;
-        initialCamera = this.transform.GetChild(0).gameObject.GetComponent<CinemachineVirtualCamera>();
+        camCount = transform.childCount - 1;
+        initialCamera = transform.GetChild(0).gameObject.GetComponent<CinemachineVirtualCamera>();
+        initialCameraPosition = initialCamera.transform.position;
+        initialCameraRotation = initialCamera.transform.rotation;
         for(int i = 0; i < camCount; i++)
         {   
-            cameraList.Add(this.transform.GetChild(i + 1).gameObject.GetComponent<CinemachineVirtualCamera>());
+            cameraList.Add(transform.GetChild(i + 1).gameObject.GetComponent<CinemachineVirtualCamera>());
+            cameraPositionList.Add(cameraList[i].transform.position);
+            cameraRotationList.Add(cameraList[i].transform.rotation);
         }
     }
 
@@ -35,12 +43,15 @@ public class CameraSwitcher : MonoBehaviour
     public void ActivateCameraList()
     {
         initialCamera.Priority = 0;
+        ResetInitialCameraConfiguration();
+        ResetCameraListConfiguration(0);
         cameraList[0].Priority = 10;
     }
 
     private void ActivateNextCamera()
     {
         camIndex = (camIndex + 1) % camCount;
+        ResetCameraListConfiguration(camIndex);
         CinemachineVirtualCamera curCamera = cameraList[camIndex];
         foreach(var cam in cameraList)
         {
@@ -50,6 +61,19 @@ public class CameraSwitcher : MonoBehaviour
 
     public void ActivateInitialCamera()
     {
+        ResetInitialCameraConfiguration();
         initialCamera.Priority = 999;
+    }
+
+    private void ResetInitialCameraConfiguration()
+    {
+        initialCamera.transform.position = initialCameraPosition;
+        initialCamera.transform.rotation = initialCameraRotation;
+    }
+
+    private void ResetCameraListConfiguration(int index)
+    {
+        cameraList[index].transform.position = cameraPositionList[index];
+        cameraList[index].transform.rotation = cameraRotationList[index];
     }
 }

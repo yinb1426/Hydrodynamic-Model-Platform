@@ -11,6 +11,7 @@ public class UIConstants
     public static string SELECT_MODEL_BUTTON_NAME = "Select_Model_Button";
     public static string EXPORT_FILES_BUTTON_NAME = "Export_Files_Button";
     public static string CLOSE_MODEL_BUTTON_NAME = "Close_Model_Button";
+    public static string QUIT_BUTTON_NAME = "Quit_Button";
 
     // 模型选择器VE中的所有元素
     public static string CONFIRM_BUTTON_NAME = "Confirm_Button";
