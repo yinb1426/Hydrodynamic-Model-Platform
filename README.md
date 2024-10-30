@@ -20,6 +20,11 @@
 ## 案例
 使用Assets/Resources中的HongKongTestArea.tif模型，使用VPM模型，使用默认参数，开始运行。
 > 若使用自己的栅格，请确保栅格尺寸为**正方形**。
+## 实现效果
+* Select Model
+![SelectModel](https://github.com/yinb1426/Hydrodynamic-Model-Platform/blob/main/Assets/Pictures/SelectModel.png)
+* 可视化效果
+![Visualization](https://github.com/yinb1426/Hydrodynamic-Model-Platform/blob/main/Assets/Pictures/Visualization.png)
 ## TODO
 * 用于自由控制相机的脚本。
 * 更多水动力模型的加入。
