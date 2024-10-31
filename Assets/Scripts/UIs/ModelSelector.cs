@@ -117,7 +117,6 @@ public class ModelSelector : MonoBehaviour
         btnClose.RegisterCallback<ClickEvent>(OnBtnCloseClick);
     }
 
-    // Update is called once per frame
     void Update()
     {
         // UIœ‘ æ
@@ -168,7 +167,6 @@ public class ModelSelector : MonoBehaviour
 
     private void OnBtnConfirmClick(ClickEvent e)
     {
-        Debug.Log("Parameters Uploaded");
         List<float> paramList = new();
         List<string> fileList = new();
 

@@ -5,11 +5,16 @@ using System.Reflection;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.UIElements;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class WaterSurfaceLocalGenerator : MonoBehaviour
 {
     public Material _Material;
+    public UIDocument bottomBarDocument;
+
+    // 底栏的文本
+    private Label textStep;
 
     private bool isRunning = false;
     private bool isDrawing = false;
@@ -46,6 +51,12 @@ public class WaterSurfaceLocalGenerator : MonoBehaviour
     private RenderTexture waterVelocityBefore = null, waterVelocityAfter = null;
     private RenderTexture waterHeightBefore = null, waterHeightAfter = null;
 
+    void Start()
+    {
+        VisualElement bottomBarVE = bottomBarDocument.rootVisualElement;
+        textStep = bottomBarVE.Q<Label>(UIConstants.STEP_LABEL_NAME);
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -53,11 +64,12 @@ public class WaterSurfaceLocalGenerator : MonoBehaviour
         {
             if(curRunningStep == 0)
             {
+                textStep.text = "Start Running!";
                 GetComponent<MeshRenderer>().enabled = false;
             }
             if (curRunningStep % savingStep == 0)
             {
-                Debug.Log(curRunningStep);
+                textStep.text = "Current Running Step: " + curRunningStep.ToString();
 
                 model.UpdateWaterMeshHeight();
                 
@@ -88,18 +100,17 @@ public class WaterSurfaceLocalGenerator : MonoBehaviour
 
         if(isDrawing)
         {
-            Debug.Log(curDrawingStep);
             if(curDrawingStep == 0)
             {
-                Debug.Log("Start Drawing!"); 
+                textStep.text = "Start Drawing!";
                 GetComponent<MeshRenderer>().enabled = true;
                 verticesAfter = verticesQueue.Dequeue();
                 waterVelocityAfter = waterVelocityQueue.Dequeue();
                 waterHeightAfter = waterHeightQueue.Dequeue();
                 totalDrawingStep = verticesQueue.Count * drawingStep;
             }
-
-            if(curDrawingStep % drawingStep == 0 && curDrawingStep != totalDrawingStep)
+            textStep.text = "Current Drawing Step: " + curDrawingStep.ToString();
+            if (curDrawingStep % drawingStep == 0 && curDrawingStep != totalDrawingStep)
             {
                 verticesBefore = verticesAfter;
                 waterVelocityBefore = waterVelocityAfter;

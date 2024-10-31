@@ -1,0 +1,5 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="BottomBar_VisualElement" style="flex-grow: 1; background-color: rgb(47, 47, 47); position: absolute; left: 0; top: auto; bottom: 0; height: 25px; right: 0; flex-direction: row; color: rgb(159, 159, 159);">
+        <ui:Label tabindex="-1" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Step_Label" style="margin-top: 2px; margin-left: 4px; padding-top: 2px; padding-right: 10px; padding-bottom: 2px; padding-left: 10px; -unity-text-align: upper-center; border-left-color: rgba(47, 47, 47, 0); border-right-color: rgba(47, 47, 47, 0); border-top-color: rgba(47, 47, 47, 0); border-bottom-color: rgba(47, 47, 47, 0);" />
+    </ui:VisualElement>
+</ui:UXML>
