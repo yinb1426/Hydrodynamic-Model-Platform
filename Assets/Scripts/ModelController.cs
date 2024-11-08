@@ -6,6 +6,7 @@ using UnityEngine;
 
 public class ModelController : MonoBehaviour
 {
+
     private bool isRunning = false;
     private TerrainSurfaceLocalGenerator terrainGenerator;
     private WaterSurfaceLocalGenerator waterGenerator;
@@ -22,6 +23,11 @@ public class ModelController : MonoBehaviour
         terrainGenerator.StartGenerating(fileList[0]);
         List<int> meshParamsList = terrainGenerator.GetMeshParams();
         waterGenerator.StartGenerating(modelName, paramsList, fileList, meshParamsList, drawingParamsList);
+    }
+
+    public void SetTerrainRenderingParams(string type, string filePath)
+    {
+        terrainGenerator.SetRenderingMaterial(type, filePath);
     }
 
     public void FinishRunning()

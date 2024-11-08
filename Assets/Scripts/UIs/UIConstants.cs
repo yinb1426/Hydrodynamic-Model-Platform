@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 public class UIConstants
 {
@@ -17,8 +15,19 @@ public class UIConstants
     public static string CONFIRM_BUTTON_NAME = "Confirm_Button";
     public static string CLOSE_BUTTON_NAME = "Close_Button";
     public static string MODEL_DROPDOWNFIELD_NAME = "Model_DropdownField";
-    public static string DRAWING_OPTIONS_VE_NAME = "DrawingOptions_VisualElement";
-    public static List<int> DRAWING_OPTIONS_STEPS_DEFAULT_VALUE = new() { 200, 3000, 300 };
+    public static string DRAWING_PARAMS_VE_NAME = "DrawingParameters_VisualElement";
+    public static List<int> DRAWING_PARAMS_STEPS_DEFAULT_VALUE = new() { 200, 3000, 300 };
+
+    // 地形纹理VE中的所有元素
+    public static string TERRAIN_RENDER_OPTIONS_VE_NAME = "TerrainRenderOptions_VisualElement";
+    public static string TERRAIN_RENDER_OPTIONS_DROPDOWNFIELD_NAME = "TerrainRenderOptions_DropdownField";
+    public static string RAMP_OPTION_VE_NAME = "RampOption_VisualElement";
+    public static string RAMP_OPTION_TEXTFIELD_NAME = "RampOption_TextField";
+    public static string RAMP_OPTION_BUTTON_NAME = "RampOption_Button";
+    public static string TEXTURE_OPTION_VE_NAME = "TextureOption_VisualElement";
+    public static string TEXTURE_OPTION_TEXTFIELD_NAME = "TextureOption_TextField";
+    public static string TEXTURE_OPTION_BUTTON_NAME = "TextureOption_Button";
+
 
     // 底栏VE中的所有元素
     public static string STEP_LABEL_NAME = "Step_Label";

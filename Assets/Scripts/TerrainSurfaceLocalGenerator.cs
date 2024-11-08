@@ -1,5 +1,6 @@
 using OSGeo.GDAL;
 using System.Collections.Generic;
+using System.IO;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -7,18 +8,24 @@ using UnityEngine.Rendering;
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class TerrainSurfaceLocalGenerator : MonoBehaviour
 {
+    public Material[] _TerrainMaterials;
+    public ComputeShader _RampComputeShader;
+
     // 地形Mesh，默认为正方形
     private Mesh mesh;
 
     // Mesh顶点属性数量
     private readonly int vertexAttributeCount = 2; // vertex, uv
-  
+
     // Mesh属性
     private int vertexCount = 0;         // 顶点总数量
     private int triangleIndexCount = 0;  // 三角形总数量
     private int meshResolution = 0;      // Mesh总边数
     private int meshWidth = 0;           // Mesh总宽度
     private List<double> metaDataList = null;
+
+    // Ramp渲染使用
+    private double maxHeight = 0.0, minHeight = 0.0;
 
     private float[] terrainHeight = null;
 
@@ -34,6 +41,10 @@ public class TerrainSurfaceLocalGenerator : MonoBehaviour
         // 读取文件
         Dataset ds = Gdal.Open(fileName, Access.GA_ReadOnly);
         Band demBand = ds.GetRasterBand(1);
+        double[] minMaxHeight = new double[2];
+        demBand.ComputeRasterMinMax(minMaxHeight, 0);
+        minHeight = minMaxHeight[0];
+        maxHeight = minMaxHeight[1];
 
         // 获取相关数据
         vertexCount = ds.RasterXSize * ds.RasterYSize;
@@ -98,6 +109,63 @@ public class TerrainSurfaceLocalGenerator : MonoBehaviour
         Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, mesh);
         GetComponent<MeshFilter>().mesh = mesh;
         mesh.RecalculateNormals();
+    }
+
+    public void SetRenderingMaterial(string type, string filePath)
+    {
+        Material currentMaterial;
+        if (type == "Ramp")
+        {
+            // 创建ComputeBuffer
+            ComputeBuffer terrainHeightBuffer = new ComputeBuffer(vertexCount, sizeof(float));
+            terrainHeightBuffer.SetData(terrainHeight);
+
+            // 创建RenderTexture
+            RenderTexture terrainHeightTexture = new RenderTexture(meshResolution + 1, meshResolution + 1, 0, RenderTextureFormat.RFloat);
+            terrainHeightTexture.enableRandomWrite = true;
+
+            // 创建KernelHandle
+            int terrainRampTextureCreatorKernelHandle = _RampComputeShader.FindKernel("TerrainRampTextureCreator");
+            _RampComputeShader.SetBuffer(terrainRampTextureCreatorKernelHandle, Shader.PropertyToID("terrainHeight"), terrainHeightBuffer);
+            _RampComputeShader.SetTexture(terrainRampTextureCreatorKernelHandle, Shader.PropertyToID("terrainHeightTexture"), terrainHeightTexture);
+            _RampComputeShader.SetFloat(Shader.PropertyToID("minHeight"), (float)minHeight);
+            _RampComputeShader.SetFloat(Shader.PropertyToID("maxHeight"), (float)maxHeight);
+            _RampComputeShader.SetInt(Shader.PropertyToID("sizeX"), meshResolution + 1);
+            _RampComputeShader.SetInt(Shader.PropertyToID("sizeY"), meshResolution + 1);
+
+            int groupsX = Mathf.CeilToInt((meshResolution + 1) / 32f);
+            int groupsY = Mathf.CeilToInt((meshResolution + 1) / 16f);
+
+            _RampComputeShader.Dispatch(terrainRampTextureCreatorKernelHandle, groupsX, groupsY, 1);
+
+            currentMaterial = _TerrainMaterials[2];
+            currentMaterial.SetTexture("_TerrainHeightTexture", terrainHeightTexture);
+
+            Texture2D rampTexture = LoadTexture2D(filePath);
+            rampTexture.wrapMode = TextureWrapMode.Clamp;
+            currentMaterial.SetTexture("_RampTexture", rampTexture);
+        }
+        else if (type == "Texture")
+        {
+            currentMaterial = _TerrainMaterials[1];
+            Texture2D terrainTexture = LoadTexture2D(filePath);
+            currentMaterial.SetTexture("_TerrainTexture", terrainTexture);
+        }
+        else
+        {
+            currentMaterial = _TerrainMaterials[0];
+        }
+        GetComponent<MeshRenderer>().sharedMaterial = currentMaterial;
+    }
+
+    private Texture2D LoadTexture2D(string filePath)
+    {
+        if (!File.Exists(filePath)) return null;
+        byte[] textureData = File.ReadAllBytes(filePath);
+        Texture2D texture = new Texture2D(2, 2);
+        if (texture.LoadImage(textureData))  // 自动调整大小
+            return texture;
+        return null;
     }
 
     public void FinishRunning()

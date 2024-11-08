@@ -14,7 +14,14 @@ public class ModelSelector : MonoBehaviour
     // 菜单面板VE
     private UIDocument document;
     private VisualElement rootVisualElement;
-    private VisualElement modelSelectorVE;
+    private VisualElement veModelSelector;
+
+    // 地形纹理相关内容
+    private DropdownField dfTerrainRenderOptions;
+    private VisualElement veRampOption;
+    private VisualElement veTextureOption;
+    private TextField tfRampOption;
+    private TextField tfTextureOption;
 
     // 导航栏和菜单面板的所有按键
     private Button btnSelectModel;
@@ -26,7 +33,7 @@ public class ModelSelector : MonoBehaviour
 
 
     // 模型选择的下拉菜单和被选中的模型名称
-    private DropdownField modelDropdownField;
+    private DropdownField dfModel;
     private string activeModelName;
 
     // 菜单是否可见
@@ -54,7 +61,7 @@ public class ModelSelector : MonoBehaviour
         // 获取UI元素
         document = GetComponent<UIDocument>();
         rootVisualElement = document.rootVisualElement;
-        modelSelectorVE = rootVisualElement.Q<VisualElement>(UIConstants.MODEL_SELECTOR_VE_NAME);
+        veModelSelector = rootVisualElement.Q<VisualElement>(UIConstants.MODEL_SELECTOR_VE_NAME);
 
         // 获取导航栏的按键
         VisualElement navBarVE = navBarDocument.rootVisualElement;
@@ -64,15 +71,32 @@ public class ModelSelector : MonoBehaviour
         btnQuit = navBarVE.Q<Button>(UIConstants.QUIT_BUTTON_NAME);
 
         // 获取窗口中的案件和下拉框
-        btnConfirm = modelSelectorVE.Q<Button>(UIConstants.CONFIRM_BUTTON_NAME);
-        btnClose = modelSelectorVE.Q<Button>(UIConstants.CLOSE_BUTTON_NAME);
-        modelDropdownField = modelSelectorVE.Q<DropdownField>(UIConstants.MODEL_DROPDOWNFIELD_NAME);
+        btnConfirm = veModelSelector.Q<Button>(UIConstants.CONFIRM_BUTTON_NAME);
+        btnClose = veModelSelector.Q<Button>(UIConstants.CLOSE_BUTTON_NAME);
+        dfModel = veModelSelector.Q<DropdownField>(UIConstants.MODEL_DROPDOWNFIELD_NAME);
+
+        // 加载地形绘制的参数
+        VisualElement veTerrainTexture = rootVisualElement.Q<VisualElement>(UIConstants.TERRAIN_RENDER_OPTIONS_VE_NAME);
+        dfTerrainRenderOptions = veTerrainTexture.Q<DropdownField>(UIConstants.TERRAIN_RENDER_OPTIONS_DROPDOWNFIELD_NAME);
+        veRampOption = veTerrainTexture.Q<VisualElement>(UIConstants.RAMP_OPTION_VE_NAME);
+        veTextureOption = veTerrainTexture.Q<VisualElement>(UIConstants.TEXTURE_OPTION_VE_NAME);
+        dfTerrainRenderOptions.choices.Add("Raw");
+        dfTerrainRenderOptions.choices.Add("Ramp");
+        dfTerrainRenderOptions.choices.Add("Texture");
+        dfTerrainRenderOptions.index = 0;
+
+        tfRampOption = veRampOption.Q<TextField>(UIConstants.RAMP_OPTION_TEXTFIELD_NAME);
+        tfTextureOption = veTextureOption.Q<TextField>(UIConstants.TEXTURE_OPTION_TEXTFIELD_NAME);
+        Button btnRampOption = veRampOption.Q<Button>(UIConstants.RAMP_OPTION_BUTTON_NAME);
+        Button btnTextureOption = veTextureOption.Q<Button>(UIConstants.TEXTURE_OPTION_BUTTON_NAME);
+        btnRampOption.RegisterCallback<ClickEvent, TextField>(OnBtnLoadClick, tfRampOption);
+        btnTextureOption.RegisterCallback<ClickEvent, TextField>(OnBtnLoadClick, tfTextureOption);
 
         // 加载模型文件夹中的模型Json
         Dictionary<string, string> modelNameDict = GetModelNameDictionary(MODEL_PARAMS_PATH, "*.json");
         foreach (var activeModelName in modelNameDict)
         {
-            modelDropdownField.choices.Add(activeModelName.Key);
+            dfModel.choices.Add(activeModelName.Key);
             ParamElements paramElements = new ParamElements();
             string jsonText = ReadData(activeModelName.Value);
             ModelParamJson modelJson = JsonUtility.FromJson<ModelParamJson>(jsonText);
@@ -94,7 +118,7 @@ public class ModelSelector : MonoBehaviour
             }
             paramCount.Add(modelJson.fileList.Count);
             modelVE.style.display = DisplayStyle.None;
-            modelSelectorVE.contentContainer.Insert(3, modelVE);
+            veModelSelector.contentContainer.Insert(3, modelVE);
 
             paramElements.VE = modelVE;
             paramElements.paramCount = paramCount;
@@ -104,8 +128,8 @@ public class ModelSelector : MonoBehaviour
         }
 
         // 初始化模型为index = 0
-        modelDropdownField.index = 0;
-        activeModelName = modelDropdownField.text;
+        dfModel.index = 0;
+        activeModelName = dfModel.text;
         modelParamElementsDict[activeModelName].VE.style.display = DisplayStyle.Flex;
 
         // 绑定点击事件
@@ -120,13 +144,31 @@ public class ModelSelector : MonoBehaviour
     void Update()
     {
         // UI显示
-        if(isVisible)
-            modelSelectorVE.style.display = DisplayStyle.Flex;
-        else
-            modelSelectorVE.style.display = DisplayStyle.None;
+        veModelSelector.style.display = isVisible ? DisplayStyle.Flex : DisplayStyle.None;
+        switch(dfTerrainRenderOptions.value)
+        {
+            case "Raw":
+            default:
+                veRampOption.style.display = DisplayStyle.None;
+                veTextureOption.style.display = DisplayStyle.None;
+                tfTextureOption.value = "";
+                tfRampOption.value = "";
+                break;
+            case "Ramp":
+                veRampOption.style.display = DisplayStyle.Flex;
+                veTextureOption.style.display = DisplayStyle.None;
+                tfTextureOption.value = "";
+                break;
+            case "Texture":
+                veTextureOption.style.display = DisplayStyle.Flex;
+                veRampOption.style.display = DisplayStyle.None;
+                tfRampOption.value = "";
+                break;
+        }
+
 
         // 更新模型参数显示
-        string curModelName = modelDropdownField.text;
+        string curModelName = dfModel.text;
         if (curModelName != activeModelName)
         {
             activeModelName = curModelName;
@@ -155,7 +197,7 @@ public class ModelSelector : MonoBehaviour
     {
         Dictionary<string, string> modelNameDict = new Dictionary<string, string>();
 
-        string[] directoryEntries = Directory.GetFiles(MODEL_PARAMS_PATH, "*.json");
+        string[] directoryEntries = Directory.GetFiles(path, pattern);
         for (int i = 0; i < directoryEntries.Length; i++)
         {
             string fileName = Path.GetFileName(directoryEntries[i]);
@@ -171,10 +213,10 @@ public class ModelSelector : MonoBehaviour
         List<string> fileList = new();
 
         // 导出输入框的值并清空
-        string curModelName = modelDropdownField.text;
+        string curModelName = dfModel.text;
         VisualElement curModelVE = modelParamElementsDict[curModelName].VE;
         List<int> paramCount = modelParamElementsDict[curModelName].paramCount;
-        ModelParamJson paramJson = modelParamElementsDict[modelDropdownField.text].paramJson;
+        ModelParamJson paramJson = modelParamElementsDict[dfModel.text].paramJson;
         for (int i = 0; i < paramCount[0]; i++)
         {
             FloatField curElement = (FloatField)curModelVE.ElementAt(i);
@@ -188,13 +230,13 @@ public class ModelSelector : MonoBehaviour
             curElement.value = string.Empty;
         }
 
-        VisualElement drawingOptionsVE = modelSelectorVE.Q<VisualElement>(UIConstants.DRAWING_OPTIONS_VE_NAME);
+        VisualElement drawingParamsVE = veModelSelector.Q<VisualElement>(UIConstants.DRAWING_PARAMS_VE_NAME);
         List<int> drawingParamsList = new();
-        for (int i = 0; i < drawingOptionsVE.childCount; i++)
+        for (int i = 0; i < drawingParamsVE.childCount; i++)
         {
-            FloatField curElement = (FloatField)drawingOptionsVE.ElementAt(i);
+            FloatField curElement = (FloatField)drawingParamsVE.ElementAt(i);
             drawingParamsList.Add((int)curElement.value);
-            curElement.value = UIConstants.DRAWING_OPTIONS_STEPS_DEFAULT_VALUE[i];
+            curElement.value = UIConstants.DRAWING_PARAMS_STEPS_DEFAULT_VALUE[i];
         }
 
 
@@ -203,6 +245,25 @@ public class ModelSelector : MonoBehaviour
         // 传输结果并运行
         cameraSwitcher.ActivateCameraList();
         modelController.StartGenerating(curModelName, paramList, fileList, drawingParamsList);
+
+        string terrainRenderingType;
+        string terrainRenderingFilePath = string.Empty;
+        switch (dfTerrainRenderOptions.value)
+        {
+            case "Raw":
+            default:
+                terrainRenderingType = "Raw";
+                break;
+            case "Ramp":
+                terrainRenderingType = "Ramp";
+                terrainRenderingFilePath = tfRampOption.value;
+                break;
+            case "Texture":
+                terrainRenderingType = "Texture";
+                terrainRenderingFilePath = tfTextureOption.value;
+                break;
+        }
+        modelController.SetTerrainRenderingParams(terrainRenderingType, terrainRenderingFilePath);
 
         isVisible = false;
     }

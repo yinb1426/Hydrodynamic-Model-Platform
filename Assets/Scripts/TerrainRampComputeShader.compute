@@ -1,0 +1,16 @@
+#pragma kernel TerrainRampTextureCreator
+
+RWStructuredBuffer<float> terrainHeight;
+RWTexture2D<float> terrainHeightTexture;
+
+int sizeX, sizeY;
+float minHeight, maxHeight;
+
+[numthreads(32, 16, 1)]
+void TerrainRampTextureCreator(uint3 id : SV_DispatchThreadID)
+{
+    if (!(id.x < sizeX && id.y < sizeY))
+        return;
+    float newHeight = (terrainHeight[id.y * sizeX + id.x] - minHeight) / (maxHeight - minHeight);
+    terrainHeightTexture[id.xy] = saturate(newHeight);
+}
