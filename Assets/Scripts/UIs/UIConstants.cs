@@ -28,8 +28,6 @@ public class UIConstants
     public static string TEXTURE_OPTION_TEXTFIELD_NAME = "TextureOption_TextField";
     public static string TEXTURE_OPTION_BUTTON_NAME = "TextureOption_Button";
 
-
     // 底栏VE中的所有元素
     public static string STEP_LABEL_NAME = "Step_Label";
-
 }

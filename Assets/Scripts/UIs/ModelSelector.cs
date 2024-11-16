@@ -39,7 +39,8 @@ public class ModelSelector : MonoBehaviour
     // 菜单是否可见
     private bool isVisible = false;
 
-    private string MODEL_PARAMS_PATH = "Assets/Resources/Models/Params";
+    // 此处最好能优化
+    private string MODEL_PARAMS_PATH = "Assets/ModelParams";
 
     private ModelController modelController;
     private CameraSwitcher cameraSwitcher;

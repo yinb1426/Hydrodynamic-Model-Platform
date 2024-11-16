@@ -153,6 +153,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe9761e5534349443b7a919847492822, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _TerrainMaterials:
+  - {fileID: 2100000, guid: 5e80ffef18ff2d24097ab677718e9e16, type: 2}
+  - {fileID: 2100000, guid: 9488d39bacc1d424c94bb9a2834fe6bb, type: 2}
+  - {fileID: 2100000, guid: adc04c68f0ad77c4a9840eea8cda8a13, type: 2}
+  _RampComputeShader: {fileID: 7200000, guid: 062e77ac71391af4ca9419a0dea1ca8f, type: 3}
 --- !u!4 &28093751
 Transform:
   m_ObjectHideFlags: 0

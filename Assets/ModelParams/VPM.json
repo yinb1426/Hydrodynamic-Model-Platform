@@ -1,0 +1,31 @@
+{
+    "modelName": "VPM",
+    "IPAddr": "127.0.0.1",
+    "IPPort": 8888,
+    "paramList":
+    [
+        {
+            "name": "Delta T",
+            "defaultValue": 0.2
+        },
+        {
+            "name": "Pipeline Length",
+            "defaultValue": 5
+        },
+        {
+            "name": "Gravity",
+            "defaultValue": 9.8
+        },
+        {
+            "name": "Ke",
+            "defaultValue": 0.0001
+        }
+    ],
+    "fileList":
+    [
+        {
+            "name": "Terrain Height",
+            "type": "float"
+        }
+    ]
+}

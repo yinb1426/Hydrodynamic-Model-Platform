@@ -14,8 +14,6 @@ public class CameraController : MonoBehaviour
     private Vector3 previousMovementPosition = Vector3.zero;
     private Vector3 previousRotationPosition = Vector3.zero;
 
-
-
     // Update is called once per frame
     void Update()
     {
